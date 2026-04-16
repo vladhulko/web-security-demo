@@ -19,7 +19,7 @@ app.use(session({
   saveUninitialized: false,
   cookie: {
     httpOnly: mode === 'safe',
-    sameSite: mode === 'safe' ? 'strict' : 'none',
+    sameSite: mode === 'safe' ? 'strict' : 'lax',
     secure: false,
   },
 }));
@@ -27,8 +27,8 @@ app.use(session({
 app.use(express.static(path.join(__dirname, 'public')));
 
 const users = {
-  alice: { username: 'alice', password: 'alice123', balance: 10000 },
-  bob: { username: 'bob', password: 'bob123', balance: 5000 },
+  alice: { username: 'vlad', password: 'vlad123', balance: 10000 },
+  bob: { username: 'misha', password: 'misha123', balance: 5000 },
 };
 
 const transactions = [];
@@ -59,7 +59,7 @@ app.listen(PORT, () => {
   console.log('  http://localhost:' + PORT);
   console.log('');
   console.log('  Users:');
-  console.log('    alice / alice123  (balance 10000)');
-  console.log('    bob   / bob123    (balance 5000)');
+  console.log('    vlad / vlad123  (balance 10000)');
+  console.log('    misha   / misha123    (balance 5000)');
   console.log('');
 });

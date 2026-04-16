@@ -14,7 +14,7 @@ router.post('/login', (req, res) => {
   if (!user || user.password !== password) {
     return res.redirect('/login?error=1');
   }
-  req.session.user = { username: user.username };
+  req.session.user = user.username;
   req.session.save((err) => {
     if (err) return res.status(500).send('Session error');
     res.redirect('/dashboard');

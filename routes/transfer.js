@@ -19,7 +19,7 @@ router.get('/dashboard', requireAuth, (req, res) => {
   const mode = req.app.locals.mode;
   const users = req.app.locals.users;
   const transactions = req.app.locals.transactions;
-  const user = users[req.session.user.username];
+  const user = users[req.session.user];
 
   const userTx = transactions
     .filter(t => t.from === user.username || t.to === user.username)
@@ -46,7 +46,7 @@ router.post('/transfer', requireAuth, (req, res) => {
     }
   }
 
-  const sender = users[req.session.user.username];
+  const sender = users[req.session.user];
   const recipient = users[String(to || '').toLowerCase()];
   const amt = parseInt(amount, 10);
 
