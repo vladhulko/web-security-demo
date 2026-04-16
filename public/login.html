@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sign in · MockBank</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #08090d;
+  --bg-2: #0f1117;
+  --card: #13151d;
+  --border: #22252f;
+  --text: #eceef3;
+  --muted: #7a7d8a;
+  --accent: #8b7bff;
+  --accent-2: #c3b8ff;
+  --danger: #ff4d6d;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-font-smoothing: antialiased;
+  background:
+    radial-gradient(ellipse 60% 50% at 30% 20%, rgba(139, 123, 255, 0.2), transparent 60%),
+    radial-gradient(ellipse 50% 40% at 80% 80%, rgba(45, 212, 191, 0.1), transparent 60%),
+    var(--bg);
+}
+.wrap { width: 100%; max-width: 420px; padding: 32px; }
+.brand {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 28px;
+  letter-spacing: -0.03em;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 36px;
+  justify-content: center;
+}
+.brand-logo {
+  width: 32px; height: 32px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  display: inline-block;
+  transform: rotate(-8deg);
+}
+.brand-slash { color: var(--accent); }
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 36px;
+}
+h1 {
+  font-family: 'Syne', sans-serif;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  margin-bottom: 6px;
+}
+.subtitle { color: var(--muted); font-size: 14px; margin-bottom: 24px; }
+form { display: flex; flex-direction: column; gap: 6px; }
+label {
+  font-size: 12px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.08em;
+  margin-top: 10px;
+}
+input {
+  background: var(--bg-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 13px 14px;
+  outline: none;
+  font-family: inherit;
+  font-size: 15px;
+  transition: border 0.15s, background 0.15s;
+}
+input:focus { border-color: var(--accent); background: var(--bg); }
+input::placeholder { color: #4d5060; }
+button {
+  background: linear-gradient(135deg, var(--accent), #a999ff);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 14px;
+  cursor: pointer;
+  font-weight: 600;
+  font-family: inherit;
+  font-size: 15px;
+  margin-top: 18px;
+  transition: transform 0.1s, box-shadow 0.2s;
+  box-shadow: 0 4px 20px rgba(139, 123, 255, 0.3);
+}
+button:hover { transform: translateY(-1px); box-shadow: 0 6px 28px rgba(139, 123, 255, 0.4); }
+.error {
+  background: rgba(255, 77, 109, 0.08);
+  color: var(--danger);
+  border: 1px solid rgba(255, 77, 109, 0.3);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  font-size: 13px;
+}
+.hint {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.hint code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--accent-2);
+  background: var(--bg-2);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">
+    <span class="brand-logo"></span>
+    mock<span class="brand-slash">/</span>bank
+  </div>
+  <div class="card">
+    <h1>Welcome back</h1>
+    <div class="subtitle">Sign in to access your account</div>
+    <div id="err" class="error" style="display:none">Invalid username or password.</div>
+    <form method="POST" action="/login" autocomplete="off">
+      <label for="u">Username</label>
+      <input id="u" name="username" placeholder="alice" required autofocus />
+      <label for="p">Password</label>
+      <input id="p" name="password" type="password" placeholder="••••••••" required />
+      <button type="submit">Sign in</button>
+    </form>
+    <div class="hint">
+      Demo accounts: <code>alice / alice123</code> &nbsp; <code>bob / bob123</code>
+    </div>
+  </div>
+</div>
+<script>
+  if (new URLSearchParams(location.search).get('error')) {
+    document.getElementById('err').style.display = 'block';
+  }
+</script>
+</body>
+</html>

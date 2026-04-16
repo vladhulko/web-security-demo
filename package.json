@@ -1,0 +1,17 @@
+{
+  "name": "mockbank",
+  "version": "1.0.0",
+  "description": "Web security demo app showing XSS and CSRF attacks (MockBank)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "safe": "node server.js --mode=safe",
+    "collector": "node attacker/xss-collector.js"
+  },
+  "private": true,
+  "dependencies": {
+    "cookie-parser": "^1.4.6",
+    "express": "^4.19.2",
+    "express-session": "^1.18.0"
+  }
+}
