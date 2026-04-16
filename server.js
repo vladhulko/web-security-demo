@@ -24,11 +24,18 @@ app.use(session({
   },
 }));
 
+if (mode === 'safe') {
+  app.use((req, res, next) => {
+    res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'");
+    next();
+  });
+}
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 const users = {
-  alice: { username: 'vlad', password: 'vlad123', balance: 10000 },
-  bob: { username: 'misha', password: 'misha123', balance: 5000 },
+  vlad: { username: 'vlad', password: 'vlad123', balance: 10000 },
+  misha: { username: 'misha', password: 'misha123', balance: 5000 },
 };
 
 const transactions = [];
@@ -39,9 +46,11 @@ app.locals.transactions = transactions;
 
 const authRouter = require('./routes/auth');
 const transferRouter = require('./routes/transfer');
+const xssRouter = require('./routes/xss');
 
 app.use(authRouter);
 app.use(transferRouter);
+app.use(xssRouter);
 
 app.get('/', (req, res) => {
   if (req.session.user) return res.redirect('/dashboard');

